@@ -1,0 +1,21 @@
+{
+  "name": "vkr_2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "reload-in-place.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "mathjax": "^3.2.2",
+    "vite": "^6.3.5",
+    "vite-plugin-handlebars": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/mathjax": "^0.0.40"
+  }
+}

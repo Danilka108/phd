@@ -1,0 +1,405 @@
+@page {
+  size: A4;
+  margin: 2cm 1.5cm 3.43cm 3cm;
+
+  @bottom-center {
+    content: counter(page);
+    font-family: "Times New Roman", serif;
+    font-size: 10pt;
+  }
+}
+
+.skip-page {
+  break-before: page;
+}
+
+a {
+  color: inherit;
+  /* Use the surrounding text color */
+  text-decoration: none;
+  /* Remove underline */
+}
+
+body {
+  font-family: "Times New Roman", serif;
+  font-size: 14pt;
+  line-height: 1.5;
+  /* text-align: justify; */
+  /* text-indent: 1.25cm; */
+  counter-reset:
+    chapterCounter sectionCounter,
+    subsectionCounter,
+    subsubsectionCounter,
+    tableCounter,
+    figCounter,
+    formulaCounter;
+}
+
+hgroup {
+  margin: 0;
+  padding: 0;
+  margin-bottom: 1.5em;
+  orphans: 2;
+}
+
+hgroup h1,
+hgroup h2,
+hgroup h3,
+hgroup h4,
+hgroup h5 {
+  font-size: 1em;
+  margin-bottom: 1.5em;
+}
+
+hgroup h3,
+hgroup h4,
+hgroup h5 {
+  font-size: 1em;
+  margin-top: 1.5em;
+}
+
+hgroup h2,
+hgroup h3,
+hgroup h4 {
+  text-align: left;
+  text-indent: 1.25cm;
+}
+
+hgroup h1 {
+  text-align: center;
+  counter-increment: chapterCounter;
+  counter-reset: sectionCounter;
+  text-transform: uppercase;
+  break-before: page;
+  margin-top: 0;
+}
+
+h1[application] {
+  counter-reset: tableCounter;
+}
+
+hgroup h1 span {
+  text-transform: none;
+}
+
+hgroup h2 {
+  counter-increment: sectionCounter;
+  counter-reset: subsectionCounter;
+  break-before: page;
+  margin-top: 0;
+}
+
+hgroup h2::before {
+  content: counter(sectionCounter);
+  padding-right: 0.5em;
+}
+
+hgroup h3 {
+  counter-increment: subsectionCounter;
+  counter-reset: subsubsectionCounter;
+}
+
+hgroup h3::before {
+  content: counter(sectionCounter) "." counter(subsectionCounter);
+  padding-right: 0.5em;
+}
+
+hgroup h4 {
+  counter-increment: subsubsectionCounter;
+}
+
+hgroup h4::before {
+  content: counter(sectionCounter) "." counter(subsectionCounter) "."
+    counter(subsubsectionCounter);
+  padding-right: 0.5em;
+}
+
+hgroup p {
+  margin: 0;
+  text-align: justify;
+  text-indent: 1.25cm;
+}
+
+table {
+  counter-increment: tableCounter;
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0;
+  margin-bottom: 0.5em;
+}
+
+thead {
+  display: table-header-group;
+}
+
+table,
+th,
+td {
+  border: 1px solid;
+}
+
+tr td::before,
+tr td::after {
+  content: "";
+  display: block;
+}
+
+td {
+
+  word-break: break-all;
+  text-align: left;
+  vertical-align: top;
+  padding: 0.2em 0.4em;
+}
+
+caption {
+  text-align: left;
+  font-size: 14pt;
+}
+
+caption::before {
+  content: "Таблица " counter(tableCounter) ". ";
+}
+
+caption[application]::before {
+  content: "Таблица " attr(application) "." counter(tableCounter) ". ";
+}
+
+caption.continued span {
+  font-size: 0;
+}
+
+caption.continued::before {
+  content: "Продолжение таблицы " counter(tableCounter);
+}
+
+caption[application].continued::before {
+  content: "Продолжение таблицы " attr(application) "." counter(tableCounter);
+}
+
+/* .table-link::after {
+  content: " " target-counter(attr(href url), tableCounter);
+} */
+
+figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Центрирует по горизонтали */
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+  break-inside: avoid;
+  counter-increment: figCounter;
+  /* Чтобы не рвать figure на страницах в Paged.js */
+}
+
+figure img {
+  max-width: 100%;
+  display: block;
+}
+
+figcaption {
+  text-align: center;
+}
+
+figcaption::before {
+  content: "Рисунок " counter(figCounter) " — ";
+}
+
+/* .fig-link::after {
+  content: " " target-counter(attr(href url), tableCounter);
+} */
+
+/* Общие настройки */
+ul.dotenum,
+ul.parenenum,
+ul.dashenum {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  /* margin-left: 1.25cm; */
+  /* break-inside: auto; */
+}
+
+ul.dotenum li,
+ul.parenenum li,
+ul.dashenum li {
+  text-align: justify;
+  text-indent: 0;
+  padding: 0;
+  margin: 0;
+  margin-left: 1.25cm;
+  position: relative;
+  /* margin-left: 1.25em; */
+  /* break-inside: auto; */
+}
+
+ul.dotenum li::before,
+ul.parenenum li::before,
+ul.dashenum li::before {
+  width: 2em;
+  text-align: right;
+  text-align-last: right;
+  position: absolute;
+  left: -2.2em;
+}
+
+/* DOTENUM — 1. С прописной буквы */
+.dotenum {
+  counter-reset: dotenum;
+}
+
+.dotenum li {
+  counter-increment: dotenum;
+  /* position: relative; */
+  /* text-indent: 0; */
+}
+
+.dotenum li::before {
+  content: counter(dotenum) ".";
+  /* position: absolute; */
+  /* left: -1em; */
+}
+
+.dotenum li::after {
+  content: ";";
+}
+
+.dotenum li.last::after {
+  content: ".";
+}
+
+.dotenum li:not(.ignore-case)::first-letter {
+  text-transform: uppercase;
+}
+
+/* PARENENUM — 1) с маленькой буквы */
+ul.parenenum {
+  counter-reset: parenenum;
+}
+
+ul.parenenum>li {
+  counter-increment: parenenum;
+  /* position: relative; */
+}
+
+ul.parenenum>li::before {
+  content: counter(parenenum) ")";
+  /* position: absolute; */
+  /* left: -1em; */
+}
+
+ul.parenenum>li::after {
+  content: ";";
+}
+
+ul.parenenum>li.last::after {
+  content: ".";
+}
+
+ul.parenenum>li:not(.ignore-case)::first-letter {
+  text-transform: lowercase;
+}
+
+/* DASHENUM — тире с маленькой буквы */
+ul.dashenum>li {
+  /* position: relative; */
+}
+
+ul.dashenum>li::before {
+  content: "–";
+}
+
+ul.dashenum>li::after {
+  content: ";";
+}
+
+ul.dashenum>li.last::after {
+  content: ".";
+}
+
+ul.dashenum>li:not(.ignore-case)::first-letter {
+  text-transform: lowercase;
+}
+
+.formula {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Центрирует по горизонтали */
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  width: 100%;
+  counter-increment: formulaCounter;
+}
+
+.formula::after {
+  content: "(" counter(formulaCounter) ")";
+  position: absolute;
+  right: 0;
+}
+
+.command {
+  width: 100%;
+  text-align: left;
+  border: 1px solid black;
+  padding: 0.1em 0.2em;
+}
+
+pre {
+  white-space: pre-wrap;
+  margin: 0;
+  padding: 1em 1.5em;
+  margin-bottom: 1em;
+  border: 1px solid black;
+  font-size: 10pt;
+  line-height: 1;
+  width: 100%;
+}
+
+code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12pt;
+}
+
+#toc-list a {
+  display: grid;
+  grid-template-columns: auto max-content;
+  grid-template-areas: "chapter page";
+  align-items: end;
+  gap: 0 0;
+}
+
+.toc a span:nth-child(1) {
+  grid-area: chapter;
+  position: relative;
+  overflow: hidden;
+}
+
+.toc a span:nth-child(1)::after {
+  content: " . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+    ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+    ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+    ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+    ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+    ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+    ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+    ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
+  position: absolute;
+}
+
+.toc a span:nth-child(2) {
+  grid-area: page;
+
+}
+
+.uppercase-header span {
+  text-transform: uppercase;
+}
+
+.uppercase-header span span {
+  text-transform: none;
+}

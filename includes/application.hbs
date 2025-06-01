@@ -1,0 +1,923 @@
+<hgroup>
+    <h1 id="app_user_manual" application>Приложениe A. <span>Руководство пользователя по работе с утилитой командной
+            строки</span>
+    </h1>
+    <p>
+        Для управления системой используется утилита командной строки &quot;acs-cli&quot;, поставляемый вместе с
+        разработанной
+        системой. Он позволяет выполнять установку компонентов системы, развертывание кластера СКУД в группах лифтов с
+        входящими в него сервисами, запуск управляющих сценариев и получение диагностической информации. Все команды
+        выполняются локально на устройстве, на котором установлен соответствующий компонент.
+    </p>
+    <p>
+        Перед развертыванием кластера необходимо установить управляющий компонент — менеджер, а затем агенты на
+        устройства, на которых будут размещаться сервисы. Установка менеджера выполняется командой:
+    </p>
+    <div class="command">
+        <code>acs-cli manager install</code>
+    </div>
+
+    <p>
+        После установки менеджера требуется выполнить его первичную настройку:
+    </p>
+
+    <div class="command">
+        <code>acs-cli manager rotate-keys</code>
+    </div>
+    <p>
+        Настройка менеджера включает генерацию криптографической пары ключей с выводом публичного ключа в консоль.
+        Данный ключ используется агентами для аутентификации менеджера и установления с ним защищенного канала связи.
+        Также, доступна настройка других конфигурационных параметров. Полный перечень конфигурационных параметров
+        менеджера и команда для их настройки представлены во вложении Б и вложении Е соответственно.
+    </p>
+    <p>
+        Далее на каждом из устройств, предназначенных для исполнения сервисов, устанавливается агент:
+    </p>
+    <div class="command">
+        <code>acs-cli agent install</code>
+    </div>
+    <p>
+        После установки агента также требуется выполнить его первичную настройку:
+    </p>
+    <div class="command">
+        <code>acs-cli agent rotate-keys</code>
+    </div>
+    <div class="command">
+        <code>acs-cli agent configure --port &lt;порт&gt; –manager-key &lt;публичный ключ менеджера&gt;</code>
+    </div>
+    <p>
+        Настройка агента включает генерацию криптографической пары ключей с выводом публичного ключа в консоль,
+        установку публичного ключа менеджера, и указание порта, на котором он будет принимать подключения от менеджера.
+        Полученный публичный ключ используется менеджером для аутентификации агента и, как уже было сказано ранее,
+        установления защищенного канала связи в паре с его публичным ключем. Также, доступна настройка других
+        конфигурационных параметров. Полный перечень конфигурационных параметров агента и команда для их настройки
+        представлены во вложении В и вложении Е соответственно.
+    </p>
+    <p>
+        После этого агент регистрируется на стороне менеджера:
+    </p>
+
+    <div class="command">
+        <code>acs-cli manager set-agent --name &lt;имя&gt; --addr &lt;адрес агента&gt; –port &lt;порт агента&gt; --key &lt;публичный ключ&gt;</code>
+    </div>
+    <p>
+        Имя агента используется далее в конфигурации топологии. Адрес агента представляет собой ip адрес устройства, на
+        котором размещен агент. Также указываются его порт и публичный ключ.
+    </p>
+    <p>
+        После регистрации агентов необходимо подготовить файл конфигурации топологии, либо использовать готовый, если
+        таковой был предоставлен. Конфигурация определяет, на каких устройствах сервисы какого типа с какими
+        конфигурационными параметрами будут развернуты. Каждый тип сервиса имеет свою версию. В будущем, новый
+        установочный пакет может содержать типы сервисов с новыми версиями. В этом случае их конфигурационные параметры
+        могут измениться. Перечень типов сервисов в составе кластера СКУД в группах лифтов с актуальными
+        конфигурационными параметрами приведен в приложении Г.
+    </p>
+    <p>
+        Конфигурация описывается в виде списка сервисов с указанием их типа, агента и параметров. Пример
+        конфигурационного файла топологии кластера представлен в приложении Д. В примере сервис с типом
+        &quot;api_server_db&quot;
+        размещается на агенте с именем &quot;db_node&quot;, а сервисы с типами &quot;api_server&quot; и
+        &quot;web_server&quot; — на агенте с именем
+        &quot;backend_node&quot;.
+    </p>
+    <p>
+        Для развертывания кластера используется команда синхронизации:
+    </p>
+    <div class="command">
+        <code>acs-cli manager cluster sync --package &lt;путь до установочного пакета&gt; --config &lt;путь до конфигурационного файла топологии&gt;</code>
+    </div>
+    <p>
+        Менеджер анализирует текущее состояние системы, сопоставляет его с указанной конфигурацией и и выполняет
+        синхронизацию топологии кластера в соответствии с указанной конфигурацией. В процессе выполняется установка
+        новых сервисов, удаление неактуальных и обновление параметров ранее установленных. Команда синхронизации может
+        использоваться повторно как для обновления конфигурационных параметров, так и для обновления кластера при
+        получении нового установочного пакета — в этом случае менеджер повторно применяет алгоритм согласования и
+        заменяет устаревшие сервисы. Также, осуществляется проверка конфигурационных параметров на предмет соответствия
+        требуемому каждым типом сервиса формату.
+    </p>
+    <p>
+        После установки сервисов пользователь может выполнить их запуск, вызвав управляющий сценарий:
+    </p>
+    <div class="command">
+        <code>acs-cli manager cluster start</code>
+    </div>
+    <p>
+        Для остановки сервисов используется сценарий остановки:
+    </p>
+    <div class="command">
+        <code>acs-cli manager cluster stop</code>
+    </div>
+    <p>
+        Текущий список сервисов, зарегистрированных у агента, может быть получен командой:
+    </p>
+    <div class="command">
+        <code>acs-cli agent services</code>
+    </div>
+    <p>
+        Метрики по работе конкретного сервиса запрашиваются следующим образом:
+    </p>
+    <div class="command">
+        <code>acs-cli agent metrics --type &lt;тип сервиса&gt; –version &lt;версия типа сервиса&gt; --period &lt;интервал&gt;</code>
+    </div>
+    <p>
+        Журнал событий доступен по аналогичной команде:
+    </p>
+    <div class="command">
+        <code>acs-cli agent events --type &lt;тип&gt; –version &lt;версия типа сервиса&gt; --period &lt;интервал&gt;</code>
+    </div>
+    <p>
+        Для формирования агрегированного отчета о состоянии всех сервисов в кластере:
+    </p>
+    <div class="command">
+        <code>acs-cli manager report</code>
+    </div>
+    <p>
+        Полученные ранее отчеты доступны для просмотра:
+    </p>
+    <div class="command">
+        <code>acs-cli manager reports</code>
+    </div>
+    <p>
+        Для получения сводного отчета по событиям, поступившим от агентов:
+    </p>
+    <div class="command">
+        <code>acs-cli manager events --period &lt;интервал&lt;</code>
+    </div>
+    <p>
+        Полный перечень команд команд CLI представлен в приложении Ж.
+    </p>
+</hgroup>
+<hgroup>
+    <h1 id="app_configs" application reset-table-counter>Приложение Б. <span>Конфигурационные параметры</span></h1>
+    <table>
+        <caption><span>Конфигурационные параметры менеджера</span></caption>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Название</th>
+                <th>Описание</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>port</td>
+                <td>TCP порт для подключения менеджера</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>reports-interval</td>
+                <td>Временной интервал создания диагностического отчета</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>reports-limit</td>
+                <td>Максимальное число хранимых в базе данных записей диагностических отчетов</td>
+            </tr>
+        </tbody>
+    </table>
+    <table>
+        <caption><span>Конфигурационные параметры агента</span></caption>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Название</th>
+                <th>Описание</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>port</td>
+                <td>TCP порт для подключения менеджера</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>controller-check-interval</td>
+                <td>Временной интервал проверки жизнеспособности контроллера сервиса</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>metrics-limit</td>
+                <td>Максимальное число хранимых в базе данных записей метрик на один сервис</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>metrics-interval</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>events-limit</td>
+                <td>Максимальное число хранимых в базе данных записей собыий на один сервис</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table style="font-size: 10pt">
+        <caption><span>Типы сервисов в составе кластера СКУД в группах лифтов с описанием конфигурационных
+                параметров</span></caption>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Название</th>
+                <th>Описание</th>
+                <th>Конфигурационный параметр</th>
+                <th>Описание конфигурационного параметра</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td rowspan="7">1</td>
+                <td rowspan="7">api_server</td>
+                <td rowspan="7">Реализует управление API-сервером, реализующий бизнес-логику СКУД в группе лифтов</td>
+                <td>port</td>
+                <td>Порт API-сервера</td>
+            </tr>
+            <tr>
+                <td>open_port</td>
+                <td>Флаг открытия порта для доступа извне</td>
+            </tr>
+
+            <tr>
+                <td>db_user_name</td>
+                <td>Имя пользователя базы данных</td>
+            </tr>
+            <tr>
+                <td>db_user_password</td>
+                <td>Пароль пользователя базы данных</td>
+            </tr>
+            <tr>
+                <td>db_name</td>
+                <td>Название базы данных</td>
+            </tr>
+            <tr>
+                <td>db_addr</td>
+                <td>Адрес базы данных</td>
+            </tr>
+            <tr>
+                <td>db_port</td>
+                <td>Порт базы данных</td>
+            </tr>
+
+            <tr>
+                <td rowspan="3">2</td>
+                <td rowspan="3">web_server</td>
+                <td rowspan="3">Реализует раздачу клиентской части и проксирование API запросов к API-серверу на основе
+                    Nginx</td>
+                <td>api_addr</td>
+                <td>IP-адрес API-сервера</td>
+            </tr>
+            <tr>
+                <td>api_port</td>
+                <td>Порт API-сервера</td>
+            </tr>
+            <tr>
+                <td>port</td>
+                <td>Порт web сервера</td>
+            </tr>
+
+            <tr>
+                <td rowspan="4">3</td>
+                <td rowspan="4">api_server_db</td>
+                <td rowspan="4">Реализует управление базой данных API-сервера на основе СУБД PostgreSQL</td>
+                <td>user_name</td>
+                <td>Имя пользователя базы данных</td>
+            </tr>
+            <tr>
+                <td>user_password</td>
+                <td>Пароль пользователя базы данных</td>
+            </tr>
+            <tr>
+                <td>name</td>
+                <td>Название базы данных</td>
+            </tr>
+            <tr>
+                <td>port</td>
+                <td>Порт, на котором работает база данных</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <caption>
+        Пример конфигурационного файла топологии кластера
+    </caption>
+    <pre>[
+    {
+        &quot;type&quot;: &quot;api_server_db&quot;,
+        &quot;agent&quot;: &quot;db_node&quot;,
+        &quot;config&quot;: {
+            &quot;user_name&quot;: &quot;acs_user&quot;,
+            &quot;user_password&quot;: &quot;securePass123&quot;,
+            &quot;name&quot;: &quot;acs_main&quot;,
+            &quot;port&quot;: &quot;5555&quot;
+        }
+    },
+    {
+        &quot;type&quot;: &quot;api_server&quot;,
+        &quot;agent&quot;: &quot;backend_node&quot;,
+        &quot;config&quot;: {
+            &quot;db_user_name&quot;: &quot;svc_user&quot;,
+            &quot;db_user_password&quot;: &quot;securePass123&quot;,
+            &quot;db_name&quot;: &quot;acs_main&quot;,
+            &quot;db_addr&quot;: &quot;10.0.0.10&quot;,
+            &quot;db_port&quot;: &quot;5555&quot;,
+            &quot;port&quot;: 8080,
+            &quot;open_port&quot;: false
+        }
+    },
+    {
+        &quot;type&quot;: &quot;web_server&quot;,
+        &quot;agent&quot;: &quot;backend_node&quot;,
+        &quot;config&quot;: {
+            &quot;api_addr&quot;: &quot;127.0.0.1&quot;,
+            &quot;api_port&quot;: 8080,
+            &quot;port&quot;: 80
+        }
+    }
+]</pre>
+
+    <caption>
+        Манифест файл установочного пакета СКУД в группах лифтов
+    </caption>
+    <pre>{
+  "service_types": [
+    {
+      "name": "api_server",
+      "controller_path": "api_server/api_server_controller",
+      "artifacts_path": "api_server/artifacts"
+    },
+    {
+      "name": "api_server_db",
+      "controller_path": "api_server_db/api_server_db_controller",
+      "artifacts_path": "api_server_db/artifacts"
+    },
+    {
+      "name": "web_server",
+      "controller_path": "web_server/web_server_controller",
+      "artifacts_path": "web_server/artifacts"
+    }
+  ],
+  "scenarios": {
+    "start": [
+      {
+        "api_server_db",
+        "api_server",
+        "web_server"
+      }
+    ],
+    "stop": [
+      {
+        "web_server",
+        "api_server",
+        "api_server_db"
+      }
+    ]
+  }
+}</pre>
+</hgroup>
+<hgroup>
+    <h1 id="app_commands" application>Приложение В. <span>Команды утилиты командной строки</span></h1>
+    <table style="font-size: 12pt">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Команда</th>
+                <th>Компонент системы</th>
+                <th>Процесс администрирования</th>
+                <th>Параметры</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>agent install</td>
+                <td>CLI</td>
+                <td>Установка агента</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>agent update</td>
+                <td>CLI</td>
+                <td>Обновление агента</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>agent remove</td>
+                <td>CLI</td>
+                <td>Удаление агента</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>manager install</td>
+                <td>CLI</td>
+                <td>Установка менеджера</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>manager update</td>
+                <td>CLI</td>
+                <td>Обновление менеджера</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>manager remove</td>
+                <td>CLI</td>
+                <td>Удаление менеджера</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>manager cluster sync</td>
+                <td>Менеджер</td>
+                <td>Синхронизация топологии кластера</td>
+                <td>--package, --config</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>manager cluster start</td>
+                <td>Менеджер</td>
+                <td>Выполнение управляющего сценария запуска кластера</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>manager cluster stop</td>
+                <td>Менеджер</td>
+                <td>Выполнение управляющего сценария остановки кластера</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>manager set-state</td>
+                <td>Менеджер</td>
+                <td>Управление состоянием сервиса</td>
+                <td>--agent, --type, --version, --state</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>manager report</td>
+                <td>Менеджер</td>
+                <td>Формирование отчёта по метрикам</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>manager reports</td>
+                <td>Менеджер</td>
+                <td>Получение списка отчётов</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td>manager events</td>
+                <td>Менеджер</td>
+                <td>Получение отчёта по событиям</td>
+                <td>--period</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td>agent metrics</td>
+                <td>Агент</td>
+                <td>Получение метрик сервиса</td>
+                <td>--type, --version, --period</td>
+            </tr>
+            <tr>
+                <td>15</td>
+                <td>agent events</td>
+                <td>Агент</td>
+                <td>Получение событий по сервису</td>
+                <td>--type, --version, --period</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td>agent services</td>
+                <td>Агент</td>
+                <td>Получение списка зарегистрированных сервисов</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td>agent rotate-keys</td>
+                <td>Менеджер</td>
+                <td>Обновление пары криптографических ключей с выводом публичного ключа</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td>agent rotate-keys</td>
+                <td>Агент</td>
+                <td>Обновление пары криптографических ключей с выводом публичного ключа</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td>manager configure</td>
+                <td>Менеджер</td>
+                <td>Обновление конфигурации менеджера</td>
+                <td>--reports-limit, --reports-interval</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td>manager show-config</td>
+                <td>Менеджер</td>
+                <td>Вывод конфигурационных параметров</td>
+                <td>—</td>
+            </tr>
+            <tr>
+                <td>21</td>
+                <td>manager set-agent</td>
+                <td>Менеджер</td>
+                <td>Добавление или обновление агента</td>
+                <td>--name, --addr, --key</td>
+            </tr>
+            <tr>
+                <td>21</td>
+                <td>manager remove-agent</td>
+                <td>Менеджер</td>
+                <td>Удаление агента</td>
+                <td>--name</td>
+            </tr>
+            <tr>
+                <td>22</td>
+                <td>agent configure</td>
+                <td>Агент</td>
+                <td>Обновление конфигурации агента</td>
+                <td>--port, --controller-check-interval, --metrics-limit, --metrics-interval, --events-limit</td>
+            </tr>
+            <tr>
+                <td>23</td>
+                <td>agent show-config</td>
+                <td>Агент</td>
+                <td>Вывод конфигурационных параметров</td>
+                <td>—</td>
+            </tr>
+        </tbody>
+    </table>
+</hgroup>
+<hgroup>
+    <h1 id="app_sourcecode" application>Приложение Г. <span>Исходный код</span></h1>
+    <caption>
+        Исходный код агента устройства
+    </caption>
+    <pre>
+use crate::comm::{AgentSocket, ManagerChannel};
+use crate::db::AgentDatabase;
+use crate::controller::ControllerProcess;
+use crate::types::{ServiceId, ServiceType, ServiceState, AgentCommand};
+
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+pub struct Agent {
+    db: Arc&lt;AgentDatabase&gt;,
+    socket: AgentSocket,
+    manager_channel: ManagerChannel,
+    services: Arc&lt;Mutex&lt;HashMap&lt;ServiceId, Arc&lt;ServiceEntry&gt;&gt;&gt;&gt;,
+}
+
+impl Agent {
+    pub async fn new(config_path: &amp;str) -&gt; Self {
+        let db = Arc::new(AgentDatabase::open(config_path).unwrap());
+        let socket = AgentSocket::bind("/tmp/agent.sock").await;
+        let manager_channel = ManagerChannel::connect().await;
+        let services = Arc::new(Mutex::new(HashMap::new()));
+        Self { db, socket, manager_channel, services }
+    }
+
+    pub async fn run(&amp;self) {
+        loop {
+            if let Some(cmd) = self.socket.next_command().await {
+                let services = self.services.clone();
+                let db = self.db.clone();
+                tokio::spawn(async move {
+                    match cmd {
+                        AgentCommand::Register { service_id, service_type } =&gt; {
+                            let mut guard = services.lock().await;
+                            if !guard.contains_key(&amp;service_id) {
+                                let entry = Arc::new(ServiceEntry::new(service_id, service_type.clone(), db.clone()));
+                                guard.insert(service_id, entry.clone());
+                                entry.register().await;
+                            }
+                        }
+                        AgentCommand::Exclude { service_id } =&gt; {
+                            if let Some(entry) = services.lock().await.get(&amp;service_id) {
+                                entry.exclude().await;
+                            }
+                        }
+                        AgentCommand::ChangeState { service_id, new_state } =&gt; {
+                            if let Some(entry) = services.lock().await.get(&amp;service_id) {
+                                entry.change_state(new_state).await;
+                            }
+                        }
+                        AgentCommand::UpdateConfig { service_id, config } =&gt; {
+                            if let Some(entry) = services.lock().await.get(&amp;service_id) {
+                                entry.update_config(config).await;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+}
+
+pub struct ServiceInternal {
+    state: ServiceState,
+    config: Option&lt;String&gt;,
+}
+
+pub struct ServiceEntry {
+    service_id: ServiceId,
+    service_type: ServiceType,
+    db: Arc&lt;AgentDatabase&gt;,
+    inner: Mutex&lt;ServiceInternal&gt;,
+}
+
+impl ServiceEntry {
+    pub fn new(service_id: ServiceId, service_type: ServiceType, db: Arc&lt;AgentDatabase&gt;) -&gt; Self {
+        let initial_state = ServiceInternal {
+            state: ServiceState::Registered,
+            config: None,
+        };
+        Self {
+            service_id,
+            service_type,
+            db,
+            inner: Mutex::new(initial_state),
+        }
+    }
+
+    pub async fn register(&amp;self) {
+        let mut inner = self.inner.lock().await;
+        if self.db.has_active_service(&amp;self.service_type).await {
+            self.db.log_event(self.service_id, "Registration denied: active version already exists").await;
+            return;
+        }
+
+        match ControllerProcess::spawn(self.service_id, &amp;self.service_type).await {
+            Ok(_) =&gt; {
+                self.db.register_service(self.service_id, self.service_type.clone()).await;
+                self.db.log_event(self.service_id, "Service successfully registered").await;
+                inner.state = ServiceState::Registered;
+            }
+            Err(e) =&gt; {
+                self.db.log_event(self.service_id, &amp;format!("Controller startup error: {}", e)).await;
+            }
+        }
+    }
+
+    pub async fn exclude(&amp;self) {
+        let mut inner = self.inner.lock().await;
+        if let Some(current_state) = self.db.get_service_state(self.service_id).await {
+            if current_state == ServiceState::Registered {
+                ControllerProcess::terminate(self.service_id).await;
+                self.db.exclude_service(self.service_id).await;
+                self.db.log_event(self.service_id, "Service successfully excluded from the system").await;
+            } else {
+                self.db.log_event(self.service_id, "Exclusion denied: invalid state").await;
+            }
+        }
+    }
+
+    pub async fn change_state(&amp;self, new_state: ServiceState) {
+        let mut inner = self.inner.lock().await;
+        if let Some(current_state) = self.db.get_service_state(self.service_id).await {
+            if Self::valid_transition(current_state, new_state) {
+                ControllerProcess::send_state_change(self.service_id, new_state.clone()).await;
+                self.db.update_service_state(self.service_id, new_state).await;
+                self.db.log_event(self.service_id, &amp;format!("Service state changed to {:?}", new_state)).await;
+                inner.state = new_state;
+            } else {
+                self.db.log_event(self.service_id, "State change denied: invalid transition").await;
+            }
+        }
+    }
+
+    pub async fn update_config(&amp;self, config: String) {
+        let mut inner = self.inner.lock().await;
+        if let Some(state) = self.db.get_service_state(self.service_id).await {
+            if state == ServiceState::Installed {
+                let result = ControllerProcess::send_config(self.service_id, config.clone()).await;
+                if result.is_ok() {
+                    self.db.update_service_config(self.service_id, config.clone()).await;
+                    self.db.log_event(self.service_id, "Configuration successfully updated").await;
+                    inner.config = Some(config);
+                } else {
+                    self.db.log_event(self.service_id, "Configuration update error").await;
+                }
+            } else {
+                self.db.log_event(self.service_id, "Configuration update denied: invalid state").await;
+            }
+        }
+    }
+
+    fn valid_transition(current: ServiceState, new_state: ServiceState) -&gt; bool {
+        use ServiceState::*;
+        matches!(
+            (current, new_state),
+            (Registered, Installed) |
+            (Installed, Running) |
+            (Running, Installed) |
+            (_, Error)
+        )
+    }
+}
+</pre>
+    <caption>
+        Исходный код менеджера устройства
+    </caption>
+    <pre>use crate::{
+    cluster::{ClusterState, Service, ServiceType, ServiceChange},
+    agent::AgentClient,
+    package::{PackageHandle, Manifest},
+    error::ManagerError,
+};
+
+pub struct ClusterOrchestrator {
+    agents: AgentRegistry,
+    packages: PackageRegistry,
+    state: ClusterStateStorage,
+}
+
+impl ClusterOrchestrator {
+    pub async fn synchronize_cluster(
+        &amp;mut self,
+        manifest: &amp;Manifest,
+        config: &amp;ClusterConfig,
+        package: &amp;PackageHandle,
+    ) -&gt; Result&lt;ClusterSyncResult, ManagerError&gt; {
+        let current_state = self.state.load().await?;
+        let mut sync_result = ClusterSyncResult::new();
+
+        let target_services = config.services();
+        let installed_services = current_state.services();
+
+        self.process_installations(
+            &amp;manifest.installation_sequence(),
+            target_services,
+            &amp;installed_services,
+            package,
+            &amp;mut sync_result
+        ).await?;
+
+        self.process_removals(
+            target_services,
+            &amp;installed_services,
+            &amp;mut sync_result
+        ).await?;
+
+        self.state.save(sync_result.new_state()).await?;
+        Ok(sync_result)
+    }
+
+    async fn process_installations(
+        &amp;self,
+        install_order: &amp;[ServiceType],
+        target_services: &amp;[Service],
+        installed_services: &amp;[Service],
+        package: &amp;PackageHandle,
+        result: &amp;mut ClusterSyncResult
+    ) -&gt; Result&lt;(), ManagerError&gt; {
+        for service_type in install_order {
+            for target in target_services.iter().filter(|s| &amp;s.service_type() == service_type) {
+                match installed_services.iter().find(|s| s.id() == target.id()) {
+                    Some(current) if current.needs_update(target) =&gt; {
+                        let change = self.update_service(current, target, package).await?;
+                        result.add_change(change);
+                    }
+                    None =&gt; {
+                        let change = self.install_service(target, package).await?;
+                        result.add_change(change);
+                    }
+                    _ =&gt; {}
+                }
+            }
+        }
+        Ok(())
+    }
+
+    async fn process_removals(
+        &amp;self,
+        target_services: &amp;[Service],
+        installed_services: &amp;[Service],
+        result: &amp;mut ClusterSyncResult
+    ) -&gt; Result&lt;(), ManagerError&gt; {
+        for existing in installed_services {
+            if !target_services.iter().any(|s| s.id() == existing.id()) {
+                let change = self.remove_service(existing).await?;
+                result.add_change(change);
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn execute_start_sequence(
+        &amp;self,
+        manifest: &amp;Manifest,
+    ) -&gt; Result&lt;ClusterState, ManagerError&gt; {
+        let mut state = self.state.load().await?;
+        let mut changes = Vec::new();
+
+        for service_type in manifest.start_sequence() {
+            for service in state.get_services_by_type(service_type) {
+                if !service.is_running() {
+                    changes.push(self.change_service_state(service, ServiceState::Running).await?);
+                }
+            }
+        }
+
+        state.apply_changes(changes);
+        self.state.save(&amp;state).await?;
+        Ok(state)
+    }
+
+    pub async fn execute_stop_sequence(
+        &amp;self,
+        manifest: &amp;Manifest,
+    ) -&gt; Result&lt;ClusterState, ManagerError&gt; {
+        let mut state = self.state.load().await?;
+        let mut changes = Vec::new();
+
+        for service_type in manifest.start_sequence().rev() {
+            for service in state.get_services_by_type(service_type) {
+                if service.is_running() {
+                    changes.push(self.change_service_state(service, ServiceState::Stopped).await?);
+                }
+            }
+        }
+
+        state.apply_changes(changes);
+        self.state.save(&amp;state).await?;
+        Ok(state)
+    }
+
+    async fn install_service(
+        &amp;self,
+        service: &amp;Service,
+        package: &amp;PackageHandle,
+    ) -&gt; Result&lt;ServiceChange, ManagerError&gt; {
+        let agent = self.agents.get(service.agent_id()).await?;
+        let artifact = self.packages.get_artifact(package, service).await?;
+        agent.install(service, &amp;artifact).await?;
+        Ok(ServiceChange::installed(service))
+    }
+
+    async fn update_service(
+        &amp;self,
+        current: &amp;Service,
+        target: &amp;Service,
+        package: &amp;PackageHandle,
+    ) -&gt; Result&lt;ServiceChange, ManagerError&gt; {
+        if current.version() != target.version() {
+            let agent = self.agents.get(current.agent_id()).await?;
+            let artifact = self.packages.get_artifact(package, target).await?;
+            agent.upgrade(current, target, &amp;artifact).await?;
+            Ok(ServiceChange::upgraded(target))
+        } else {
+            self.reconfigure_service(current, target.config()).await
+        }
+    }
+
+    async fn change_service_state(
+        &amp;self,
+        service: &amp;Service,
+        state: ServiceState,
+    ) -&gt; Result&lt;ServiceChange, ManagerError&gt; {
+        let agent = self.agents.get(service.agent_id()).await?;
+        agent.change_state(service, state).await?;
+        Ok(ServiceChange::state_changed(service, state))
+    }
+}
+
+pub struct ClusterSyncResult {
+    changes: Vec&lt;ServiceChange&gt;,
+    new_state: ClusterState,
+}
+
+impl ClusterSyncResult {
+    pub fn new() -&gt; Self {
+        Self {
+            changes: Vec::new(),
+            new_state: ClusterState::empty(),
+        }
+    }
+
+    pub fn add_change(&amp;mut self, change: ServiceChange) {
+        self.changes.push(change);
+        self.new_state.apply_change(change);
+    }
+
+    pub fn new_state(&amp;self) -&gt; &amp;ClusterState {
+        &amp;self.new_state
+    }
+}</pre>
+
+
+</hgroup>
